@@ -11,6 +11,35 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 
+Williston <-st_read(file.path(spatialOutDir,"Williston.gpkg")) %>%
+  st_intersection(AOI)
+McLeodLakeTT <-st_read(file.path(spatialOutDirP,"McLeodLakeTT.gpkg")) %>%
+  st_intersection(AOI)
+
+waterpt<-st_read(file.path(spatialOutDir,"wetland.pt.gpkg"))
+
+Williston_pts <- st_intersection(waterpt, Williston) %>%
+  st_drop_geometry() %>%
+  mutate(Nation='Williston') %>%
+  dplyr::select(WTLND_ID, Nation)
+WriteXLS(Williston_pts,file.path(dataOutDir,paste('Williston_pts.xlsx',sep='')))
+
+McLeodLakeTT_pts <- st_intersection(waterpt, McLeodLakeTT) %>%
+  st_drop_geometry() %>%
+  mutate(Nation='McLeodLakeTT') %>%
+  dplyr::select(WTLND_ID, Nation)
+WriteXLS(McLeodLakeTT_pts,file.path(dataOutDir,paste('McLeodLakeTT_pts.xlsx',sep='')))
+
+Will_McLeod_pts <- st_intersection(waterpt, Will_McLeod) %>%
+  st_drop_geometry() %>%
+  mutate(Nation='McLeodLakeTT') %>%
+  dplyr::select(WTLND_ID, Nation)
+WriteXLS(Will_McLeod_pts,file.path(dataOutDir,paste('Will_McLeod_pts.xlsx',sep='')))
+
+message('Breaking')
+break
+
+##############
 TeaSpot <-st_read(file.path(spatialOutDirP,"TeaSpot.gpkg")) %>%
   st_intersection(AOI)
 NakazdliCabins_50km <-st_read(file.path(spatialOutDirP,"NakazdliCabins_50km.gpkg")) %>%
@@ -36,8 +65,6 @@ FtStJames<- FtStJames_50K %>%
 Saulteau<-MoberlyLake_50K
 
 mapview(McLeodLakeFN)+mapview(NakazdliCabins)+mapview(FtStJames)+mapview(Saulteau)
-
-waterpt<-st_read(file.path(spatialOutDir,"wetland.pt.gpkg"))
 
 Nakadli_pts <- st_intersection(waterpt, NakazdliCabins) %>%
   st_drop_geometry() %>%

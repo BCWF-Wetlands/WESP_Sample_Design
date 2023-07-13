@@ -50,27 +50,34 @@ source('01_base_load.R')
 #source('02_cleanRoads_AOI.R')
 #source('02_clean_disturb_Prov.R')
 #source('02_clean_disturb_AOI.R')
+#source('02_clean_LandType_Prov.R')
+#source('02_clean_BEC_Prov.R')
+#source('02_clean_FOWN.R')
 
 #source('03_analysis_1_Roads.R')
 #source('03_analysis_1_Roads_PEM.R')
+
 #source('03_analysis_2_BEC.R')
 
-#Flow needs updating
 #source('03_analysis_3_Flow.R') # for already existing hydro indicators
 #source('03_analysis_3_Flow_byWshd.R') #if needed
 #source('03_analysis_3_New_Flow.R') # for new base wetlands
 #  includes source('03_analysis_3_Flow_StreamStartEnd.R')
 
 #source('03_analysis_4_Disturbance.R')
+#source('03_analysis_4_RdDisturbance.R')
 #source('03_analysis_5_LandCover.R')
 
-#check for BVWF attributes<-c("dist_to_road","parcelmap_private","partner_site")
+#check for BCWF attributes<-c("dist_to_road","parcelmap_private","partner_site")
 
-#source('03_analysis_6_FOWN.R')
-#source('03_analysis_6_FOWN_PEM.R')
-#source('03_analysis_6_NationBoundary.R')
-#source('03_analysis_6_FNationBoundary_PEM.R')
-#source('03_analys_7_Collate.R')
+#source('03_analysis_6_Geology.R')
+#source('03_analysis_6_PrivateLand.R') if pre-made
+#source('03_analysis_6_FOWN.R') if made
+#source('03_analysis_6_FOWN_PEM.R') - SB
+#source('03_analysis_6_NationBoundary.R') - if needed
+#source('03_analysis_6_FNationBoundary_PEM.R') - if needed
+
+#source('03_analys_7_Collate.R') by ecoprovince
 
 #source('04_output.R')
 

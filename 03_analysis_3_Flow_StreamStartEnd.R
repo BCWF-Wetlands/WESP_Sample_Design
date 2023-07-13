@@ -13,13 +13,13 @@
 #Notes until new flow is working need to join back in flow info
 # from WeltansAll.gpkg in WESP_data_prep out spatial directory
 #testing data set
-mapview(TestAOI) + mapview(AOI)
+#mapview(TestAOI) + mapview(AOI)
 #AOI<-TestAOI
 WetlandsT<-Wetlands #%>%
   st_intersection(AOI)
 #write_sf(WetlandsT, file.path(spatialOutDir,"WetlandsT.gpkg"))
 
-DEM_AOI<-rast(DEM.tp) #%>%
+DEM_AOI<-rast(file.path(spatialOutDir,paste0('DEMtp_',WetlandAreaShort,'.tif'))) #%>%
   #mask(vect(AOI)) %>%
   #crop(vect(AOI))
 #writeRaster(DEM_AOI, filename=file.path(spatialOutDir,'DEM_AOI.tif'), overwrite=TRUE)
@@ -58,7 +58,7 @@ StreamsT.v.d<-terra::extract(DEM_AOI,StreamsT.v,mean,bind=TRUE) #max height of n
 # any wetlands within network will be lower ie recieving water
 # any wetalnds contributing water should be higer - but no.....
 StreamsTD<-st_as_sf(StreamsT.v.d) %>%
-  dplyr::rename(StrmElevation=layer)
+  dplyr::rename(StrmElevation=names(DEM_AOI))
 write_sf(StreamsTD, file.path(spatialOutDir,"StreamsTD.gpkg"))
 #StreamsTD<-st_read(file.path(spatialOutDir,"StreamsTD.gpkg"))
 
@@ -85,14 +85,14 @@ start1.v<-vect(start1)
 start1.v$ID_UF <- 1:nrow(start1.v)
 start1.v.d<-terra::extract(DEM_AOI,start1.v,max,method='bilinear',bind=TRUE)
 start1D<-st_as_sf(start1.v.d) %>%
-  dplyr::rename(PtElevation=layer)
+  dplyr::rename(PtElevation=names(DEM_AOI))
 #write_sf(start1D, file.path(spatialOutDir,"start1D.gpkg"))
 
 end1.v<-vect(end1)
 end1.v$ID_UF <- 1:nrow(end1.v)
 end1.v.d<-terra::extract(DEM_AOI,end1.v,max,method='bilinear',bind=TRUE)
 end1D<-st_as_sf(end1.v.d) %>%
-  dplyr::rename(PtElevation=layer)
+  dplyr::rename(PtElevation=names(DEM_AOI))
 #write_sf(end1D, file.path(spatialOutDir,"end1D.gpkg"))
 
 ##End Points
@@ -150,8 +150,11 @@ Strm_start_end <- st_join(WetlandsTendB,stream_start_end,join = st_covers) %>%
   mutate(ending=ifelse(end=='end',1,0)) %>%
   group_by(WTLND_ID) %>%
   dplyr::summarize(n=n(),nEnd=sum(ending),nStart=sum(starting)) %>%
-  mutate(stream_start=ifelse(nEnd>0 & nStart==0,'Yes','No')) %>%
-  mutate(stream_end=ifelse(nStart>0 & nEnd==0,'Yes','No')) %>%
+  #mutate(stream_start=ifelse(nEnd>0 & nStart==0,'Yes','No')) %>%
+  #mutate(stream_end=ifelse(nStart>0 & nEnd==0,'Yes','No')) %>%
+  #mutate(stream_StartEnd=ifelse(nEnd>0 & nStart>0,'Yes','No'))
+  mutate(stream_end=ifelse(nEnd>0 & nStart==0,'Yes','No')) %>%
+  mutate(stream_start=ifelse(nStart>0 & nEnd==0,'Yes','No')) %>%
   mutate(stream_StartEnd=ifelse(nEnd>0 & nStart>0,'Yes','No'))
 
 tt<-Strm_start_end %>%

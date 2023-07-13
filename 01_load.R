@@ -23,14 +23,6 @@
 #DEM - use temporarily since 100m x 100m
 #DEM<-raster(file.path(DataDir,'PROVdata/DEM/DEM.tif'))
 
-#Current BEC - failing need faster band width
-
-#BECin<-bcdc_get_data("WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY")
-#BECin<-st_read(file.path(DataDir,'PROVdata/BEC.gpkg'))
-
-#BEC_LUT<-read_csv(file.path(SpatialDir,'v_datadeliver_tiff_bec.csv')) %>%
-#  dplyr::rename(BGC_LABEL = becsubzone)
-
 #Roads - use latest CE roads - from the Province - Rob Oostlander
 #Skip and use pre-processed
 #Rd_gdb <- list.files(file.path(RoadDir, "CE_Roads/2017"), pattern = ".gdb", full.names = TRUE)[1]
@@ -199,6 +191,7 @@ write_sf(BedrockP, file.path(spatialOutDirP,"BedrockP.gpkg"))
 #Load Fires
 Wildfire_Historical<-read_sf(file.path(DataDir,'PROVdata/Historic_Fire/H_FIRE_PLY/H_FIRE_PLY_polygon.shp'))
 write_sf(Wildfire_Historical, file.path(spatialOutDirP,"Wildfire_Historical.gpkg"))
+#Wildfire_Historical<-st_read(file.path(spatialOutDirP,"Wildfire_Historical.gpkg"))
 BurnSeverity<-read_sf(file.path(DataDir,'PROVdata/Burn_Severity/BURN_SEVERITY/BURN_SVRTY_polygon.shp'))
 write_sf(BurnSeverity, file.path(spatialOutDirP,"BurnSeverity.gpkg"))
 
@@ -221,7 +214,36 @@ SFN_TT <- read_sf(file.path(DataDir,"WESPdata/FirstNations/SFN_TT/SFN_TT.shp"))
 st_crs(SFN_TT) <- 3005
 write_sf(SFN_TT, file.path(spatialOutDirP,"SFN_TT.gpkg"))
 
-#Load Nation AOI
+#Load Nation 2023 AOI - clean up slivers
+McLeodLakeTT <- read_sf(file.path(DataDir,"MLIBTraditionalTerritory.kml")) %>%
+  st_transform(Prov_crs) %>%
+  st_intersection(AOI) %>%
+  st_cast("POLYGON") %>%
+  mutate(areaHa=st_area(.)) %>%
+  dplyr::filter(areaHa==max(areaHa))
+write_sf(McLeodLakeTT, file.path(spatialOutDir,"McLeodLakeTT.gpkg"))
+
+Williston <- read_sf(file.path(DataDir,"Williston Basin/MJR_WTRSHD_Overlapping Williston.shp")) %>%
+  st_transform(Prov_crs) %>%
+  mutate(Williston=1) %>%
+  group_by(Williston) %>%
+  dplyr::summarize(n=n()) %>%
+  ungroup() %>%
+  st_intersection(AOI) %>%
+  st_cast("POLYGON") %>%
+  mutate(areaHa=st_area(.)) %>%
+  dplyr::filter(areaHa==max(areaHa))
+write_sf(Williston, file.path(spatialOutDir,"Williston.gpkg"))
+
+Will_McLeod<-McLeodLakeTT %>%
+  st_intersection(Williston)
+write_sf(Will_McLeod, file.path(spatialOutDir,"Will_McLeod.gpkg"))
+
+mapview(AOI) + mapview(McLeodLakeTT) + mapview(Williston) + mapview(Will_McLeod)
+
+
+
+
 McLeodLakeFN_50km <- read_sf(file.path(DataDir,"WESPdata/FirstNations/McLeodLake_50km.gpkg"))
 st_crs(McLeodLakeFN_50km) <- 3005
 write_sf(McLeodLakeFN_50km, file.path(spatialOutDirP,"McLeodLakeFN_50km.gpkg"))

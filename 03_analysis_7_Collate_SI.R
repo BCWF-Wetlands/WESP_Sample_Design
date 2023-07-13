@@ -30,14 +30,6 @@ private <- read_xlsx(file.path(dataOutDir,paste('Private.xlsx',sep='')))
 BedRock<-read_xlsx(file.path(dataOutDir,paste('BedRock.xlsx',sep='')))
 
 # Nation_pts
-Williston<-read_xlsx(file.path(dataOutDir,paste('Williston_pts.xlsx',sep='')))
-McLeodLakeTT<-read_xlsx(file.path(dataOutDir,paste('McLeodLakeTT_pts.xlsx',sep='')))
-Will_McLeod<-read_xlsx(file.path(dataOutDir,paste('Will_McLeod_pts.xlsx',sep='')))
-#Nakadli<-read_xlsx(file.path(dataOutDir,paste('Nakadli_pts.xlsx',sep='')))
-#McLeodLakeFN<-read_xlsx(file.path(dataOutDir,paste('McLeodLakeFN_pts.xlsx',sep='')))
-#FtStJames<-read_xlsx(file.path(dataOutDir,paste('FtStJames_pts.xlsx',sep='')))
-#Saulteau<-read_xlsx(file.path(dataOutDir,paste('Saulteau_pts.xlsx',sep='')))
-#TeaSpot<-read_xlsx(file.path(dataOutDir,paste('TeaSpot_pts.xlsx',sep=''))) #no wetlands in TeaSpot
 
 #Join strata and select criteria attributes data back to wetlands
 SampleStrata  <- Wetlands %>%
@@ -51,17 +43,6 @@ SampleStrata  <- Wetlands %>%
   left_join(RdDisturb, by='WTLND_ID') %>%
   left_join(private, by='WTLND_ID') %>%
   left_join(BedRock, by='WTLND_ID') %>%
-  left_join(Will_McLeod, by='WTLND_ID') %>%
-  dplyr::rename(Will_McLeod=Nation) %>%
-  left_join(Williston, by='WTLND_ID') %>%
-  dplyr::rename(Williston=Nation) %>%
-  left_join(McLeodLakeTT, by='WTLND_ID')%>%
-  dplyr::rename(McLeodLakeTT=Nation) %>%
-  #left_join(Saulteau, by='WTLND_ID')%>%
-  #dplyr::rename(Saulteau=Nation) %>%
-  #left_join(FtStJames, by='WTLND_ID') %>%
-  #dplyr::rename(FtStJames=Nation) %>%
-  #left_join(TeaSpot, by='WTLND_ID') %>%
   #  mutate(StrataGroup=as.character(group_indices(.,BEC,FlowCode))) %>% #53108
   #group_by(BEC,FlowCode) %>%
   #mutate(StrataGroup = as.character(cur_group_id())) %>%
@@ -76,8 +57,6 @@ SampleStrata  <- Wetlands %>%
  # mutate(YearSampled=0) %>%
   dplyr::select(WTLND_ID, Sampled, SampleType, YearSampled,
                 win500, pcentIn500Buf,#dist_to_road, #pcentIn500Buf,win50,
-                #Nakadli,McLeodLakeFN,Saulteau,FtStJames,
-                Williston, McLeodLakeTT, Will_McLeod,
                 stream_intersect,river_intersect,mmwb_intersect,lake_intersect,
                 split_by_stream,stream_start,stream_end, #granitic_bedrock,max_stream_order
                 BEC,#BEC_BCWF,
@@ -88,7 +67,8 @@ SampleStrata  <- Wetlands %>%
                 LandCoverType, LandCCode,granitic_bedrock,
                 pct_private_ovlp,#pct_private_overlap,
                 PEMwetland) %>%
-  mutate_if(is.character, ~replace_na(.,"no"))  %>%
+  dplyr::filter(!(is.na(BEC))) %>%
+  mutate_if(is.character, ~replace_na(.,"No"))  %>%
   st_set_crs(3005)
 
   #Filter out wetlands on Alberta boundary
@@ -105,7 +85,7 @@ SampleStrata<-SampleStrata %>%
 
 write_sf(SampleStrata, file.path(spatialOutDir,"SampleStrata.gpkg"), delete_dsn = T)
 st_write(SampleStrata, file.path(spatialOutDir,"SampleStrata_SubB.shp"), delete_dsn = T)
-
+#SampleStrata<-st_read(file.path(spatialOutDir,"SampleStrata.gpkg"))
 
 SampleStrata_Final<-SampleStrata %>%
   st_drop_geometry()

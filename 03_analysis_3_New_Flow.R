@@ -34,6 +34,7 @@ Streams<-read_sf(file.path(spatialOutDirP,"StreamsP.gpkg")) %>%
   dplyr::filter(EDGE_TYPE %in% c('1000', '1050', '1100', '1150', '1250', '2000', '2300')) %>%
   st_intersection(AOI)
 write_sf(Streams, file.path(spatialOutDir,"Streams.gpkg"))
+Streams<-st_read(file.path(spatialOutDir,"Streams.gpkg"))
 
 #Use Geos to get stream ends and starts - works better than st_ version
 st1 <- as_geos_geometry(Streams) %>%
@@ -41,7 +42,7 @@ st1 <- as_geos_geometry(Streams) %>%
 
 #Buffer to identify streams next to wetlands
 StreamsB <- Streams %>%
-  st_buffer(50) %>%
+  st_buffer(25) %>%
   st_cast("POLYGON")
 StreamsNearBy1<-StreamsB %>%
   st_intersects(Wetlands) %>%
@@ -52,10 +53,10 @@ StreamsNearBy <- StreamsNearBy1 %>%
   mutate(Streams=ifelse(Streams>0, 1, 0))
 
 #Lakes
-Lakes <- read_sf(file.path(spatialOutDir,"Lakes.gpkg")) %>%
+Lakes <- read_sf(file.path(spatialOutDirP,"Lakes.gpkg")) %>%
   st_intersection(AOI) %>%
   mutate(lake_id=as.numeric(rownames(.))) %>%
-  st_buffer(50) %>%
+  st_buffer(25) %>%
   st_cast("POLYGON") %>%
   mutate(LakeSize=case_when(
     AREA_HA >5 ~ 3,
@@ -63,6 +64,9 @@ Lakes <- read_sf(file.path(spatialOutDir,"Lakes.gpkg")) %>%
     AREA_HA <=1 ~ 1,
     TRUE ~ 0
   ))
+write_sf(Lakes, file.path(spatialOutDir,"Lakes.gpkg"))
+write_sf(Wetlands, file.path(spatialOutDir,"WetlandsLakes.gpkg"))
+
 LakeNearBy1<-Lakes %>%
   st_intersects(Wetlands) %>%
   tibble::enframe(name = 'lake_id', value = 'wet_id') %>%
@@ -70,26 +74,31 @@ LakeNearBy1<-Lakes %>%
 LakeNearBy <- LakeNearBy1 %>%
   mutate(Lake=ifelse(lake_id>0, 1, 0)) %>%
   left_join(Lakes) %>%
-  dplyr::select(lake_id, wet_id, Lake, LakeHa=AREA_HA)
+  group_by(wet_id) %>%
+  dplyr::summarise(nLake=sum(Lake),
+                   LakeHa=sum(AREA_HA)) %>%
+  dplyr::select(wet_id, nLake, LakeHa)
 
 #Rivers
-Rivers<-read_sf(file.path(spatialOutDir,"Rivers.gpkg")) %>%
+Rivers<-read_sf(file.path(spatialOutDirP,"Rivers.gpkg")) %>%
   st_intersection(AOI)
 RiversB <- Rivers %>%
-  st_buffer(50) %>%
+  st_buffer(25) %>%
   st_cast("POLYGON")
 RiverNearBy<-RiversB %>%
   st_intersects(Wetlands) %>%
   tibble::enframe(name = 'River', value = 'wet_id') %>%
   tidyr::unnest(wet_id)
 RiverNearBy <- RiverNearBy %>%
-  mutate(River=ifelse(River>0, 1, 0))
+  group_by(wet_id) %>%
+  dplyr::summarise(nRiver=sum(River)) %>%
+  mutate(River=ifelse(nRiver>0, 1, 0))
 
 #Man made Waterboidies
-MMWB<-st_read(file.path(spatialOutDir,"MMWB.gpkg")) %>%
+MMWB<-st_read(file.path(spatialOutDirP,"MMWB.gpkg")) %>%
   st_intersection(AOI) %>%
   mutate(mmwb_id=as.numeric(rownames(.))) %>%
-  st_buffer(50) %>%
+  st_buffer(25) %>%
   st_cast("POLYGON") %>%
   mutate(MMWBSize=case_when(
     area_Ha >5 ~ 3,
@@ -104,7 +113,10 @@ MMWBNearBy1<-MMWB %>%
 MMWBNearBy <- MMWBNearBy1 %>%
   mutate(MMWB=ifelse(mmwb_id>0, 1, 0)) %>%
   left_join(MMWB) %>%
-  dplyr::select(mmwb_id, wet_id, MMWB, MMWBHa=area_Ha)
+  dplyr::select(mmwb_id, wet_id, MMWB, area_Ha) %>%
+  group_by(wet_id) %>%
+  dplyr::summarise(nMMWB=sum(MMWB),
+                   MMWBHa=sum(area_Ha))
 
 #join the water data frames with 1 record per wetland
 WaterNearBy <- LakeNearBy %>%
@@ -112,7 +124,7 @@ WaterNearBy <- LakeNearBy %>%
   full_join(StreamsNearBy, by='wet_id') %>%
   full_join(MMWBNearBy, by='wet_id') %>%
   group_by(wet_id) %>%
-  dplyr::summarise(nRiver=sum(River), nStream=sum(Streams), nLake=sum(Lake), nMMWB=sum(MMWB),
+  dplyr::summarise(nRiver=sum(River), nStream=sum(Streams), nLake=sum(nLake), nMMWB=sum(nMMWB),
                    LakeHa=max(LakeHa), MMWBHa=max(MMWBHa)) %>%
   mutate(Water=ifelse((nRiver | nStream | nLake | nMMWB)>0, 1, 0)) %>%
   mutate(LakeSize=case_when(
@@ -133,8 +145,8 @@ Strm_start_end<-read_xlsx(file.path(dataOutDir,paste0('Strm_start_end.xlsx')))
 WetlandsN<-Wetlands %>%
   left_join(Strm_start_end, by='WTLND_ID') %>%
   left_join(WaterNearBy, by='wet_id')
-WetlandsN$Water[is.na(WetlandsN$stream_start)]<-'No'
-WetlandsN$Water[is.na(WetlandsN$stream_end)]<-'No'
+WetlandsN$Water[is.na(WetlandsN$stream_start)]<-0
+WetlandsN$Water[is.na(WetlandsN$stream_end)]<-0
 WetlandsN$Water[is.na(WetlandsN$Water)]<-0
 WetlandsN$LakeSize[is.na(WetlandsN$LakeSize)]<-0
 WetlandsN$nLake[is.na(WetlandsN$nLake)]<-0
@@ -230,12 +242,16 @@ flow.site <- WetFlow %>%
   mutate(perc = ceiling(no.pts / sum(no.pts)*100))
 
 WriteXLS(WetFlow,file.path(dataOutDir,paste('WetFlow.xlsx',sep='')))
-WriteXLS(flow.site,file.path(dataOutDir,paste('ESIFlowxWetland.xlsx',sep='')))
+#WriteXLS(flow.site,file.path(dataOutDir,paste('ESIFlowxWetland.xlsx',sep='')))
 
 
 message('Breaking')
 break
 
+FlowCheck  <- Wetlands %>%
+  #dplyr::rename(BEC_BCWF=BEC) %>%
+  left_join(WetFlow, by='WTLND_ID')
+write_sf(FlowCheck, file.path(spatialOutDir,"FlowCheck.gpkg"))
 #######exploratory code
 
 #WetlandsB<-st_buffer(Wetlands, dist=50) %>%

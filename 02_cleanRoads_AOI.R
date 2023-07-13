@@ -47,13 +47,14 @@ if (!file.exists(file500)) {
 
 
 fileWetRd1 <- file.path(spatialOutDir,"wetsRoads1.gpkg")
-if (!file.exists(fileWetRd1)) {
-  wetsRoads1<-Wetlands %>%
-  st_intersection(roads500m)
-write_sf(wetsRoads1, file.path(spatialOutDir,"wetsRoads1.gpkg"))
-} else {
-  wetsRoads1<-st_read(file.path(spatialOutDir,"wetsRoads1.gpkg")) #17714
-}
+#if (!file.exists(fileWetRd1)) {
+#  wetsRoads1a<-Wetlands %>%
+#  st_intersection(roads500m)
+  #write_sf(wetsRoads1, file.path(spatialOutDir,"wetsRoads1.gpkg"))
+#  write_sf(wetsRoads1a, file.path(spatialOutDir,"wetsRoads1a.gpkg"))
+#} else {
+#  wetsRoads1a<-st_read(file.path(spatialOutDir,"wetsRoads1a.gpkg")) #17714
+#}
 
 #Modify to use exactextract - way faster than st_intersection
 roads500mr <- fasterize(roads500m,ProvRast)
