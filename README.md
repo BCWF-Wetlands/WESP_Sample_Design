@@ -15,11 +15,11 @@ WESP - Wetland Ecosystem Services Protocol
 There are three sets of WESP R scripts to identify wetlands for monitoring within a study area.  
 1) WESP_data_prep - presents a set of scripts used to generate a new, or process existing, wetlands for a study area - https://github.com/BCWF-Wetlands/WESP_data_prep;  
 2) WESP_Sample_Design - This repository, attributes wetlands with local human and natural landscape characteristics; and    
-3) WESP_Sample_Draw - selects a set of wetlands for sampling https://github.com/BCWF-Wetlands/WESP_Sample_Design.
+3) WESP_Sample_Draw - Generates a report card of how samples are meeting sampling criteria and performs a draw to select wetlands to meet criteria - https://github.com/BCWF-Wetlands/WESP_Sample_Design.
 
 ### Usage
 
-There are a set of scripts that help prepare data for WESP sample design, there are four basic sets of scripts:    
+There are a set of scripts that help attribute wetlands for the sample draw, there are four basic sets of scripts:    
 Control scripts - set up the analysis environment;   
 Load scripts - loads base data;    
 Clean scripts - cleans spatial layers for attributing wetlands; and    
